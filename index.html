@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Алфавит С.А. Новгородова — Транслитератор</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans', sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18",
+      "react-dom/client": "https://esm.sh/react-dom@18/client"
+    }
+  }
+  </script>
+
+  <script type="module">
+import { useState, useCallback, createElement as h } from "react";
+import { createRoot } from "react-dom/client";
+
+const RULES = [
+  ["ннь", "\u{AB64}\u{AB64}"],
+  ["ддь", "\u{AB58}\u{AB58}"],
+  ["дь", "\u{AB58}"],
+  ["ль", "\u028E"],
+  ["нь", "\u{AB64}"],
+  ["ыа", "\u{AB60}"],
+  ["иэ", "\u{AB61}"],
+  ["үө", "w"],
+  ["уо", "\u{AB63}"],
+  ["аа", "a:"], ["ии", "i:"], ["оо", "\u0254:"], ["өө", "\u{AB62}:"],
+  ["уу", "u:"], ["үү", "y:"], ["ыы", "\u026F:"], ["ээ", "e:"],
+  ["а", "a"], ["и", "i"], ["о", "\u0254"], ["ө", "\u{AB62}"],
+  ["у", "u"], ["ү", "y"], ["ы", "\u026F"], ["э", "e"],
+  ["б", "b"], ["г", "g"], ["ҕ", "\u0283"], ["д", "d"],
+  ["й", "j"], ["к", "k"], ["л", "l"], ["м", "m"],
+  ["н", "n"], ["ҥ", "\u014B"], ["п", "p"], ["р", "r"],
+  ["с", "s"], ["т", "t"], ["х", "q"], ["ч", "c"],
+  ["һ", "h"], ["ф", "f"], ["в", "v"],
+  ["я", "ja"], ["ю", "ju"], ["ё", "j\u0254"],
+  ["ж", "\u0292"], ["ш", "\u0283\u0283"], ["з", "z"], ["ц", "ts"],
+  ["ь", ""], ["ъ", ""],
+];
+
+function transliterate(text) {
+  const lower = text.toLowerCase();
+  let result = "";
+  let i = 0;
+  while (i < lower.length) {
+    let matched = false;
+    for (const [from, to] of RULES) {
+      if (lower.startsWith(from, i)) {
+        result += to;
+        i += from.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) { result += lower[i]; i++; }
+  }
+  return result;
+}
+
+const FALLBACK_MAP = [
+  ["\u{AB60}", "\u0459"],
+  ["\u{AB61}", "\u0465"],
+  ["\u{AB62}", "\u0153"],
+  ["\u{AB63}", "uo"],
+];
+
+function applyFallback(text) {
+  let out = text;
+  for (const [from, to] of FALLBACK_MAP) out = out.replaceAll(from, to);
+  return out;
+}
+
+const TABLE_DATA = [
+  { cyr: "А а / АА аа",  nov: "a / a:",  cyr2: "Нь нь", nov2: "\u{AB64}" },
+  { cyr: "Б б",          nov: "b",        cyr2: "Ҥ ҥ",   nov2: "\u014B" },
+  { cyr: "В в",          nov: "v",        cyr2: "О о / ОО оо", nov2: "\u0254 / \u0254:" },
+  { cyr: "Г г",          nov: "g",        cyr2: "Ө ө / ӨӨ өө", nov2: "\u{AB62} / \u{AB62}:" },
+  { cyr: "Ҕ ҕ",          nov: "\u0283",   cyr2: "П п",   nov2: "p" },
+  { cyr: "Д д",          nov: "d",        cyr2: "Р р",   nov2: "r" },
+  { cyr: "Дь дь",        nov: "\u{AB58}", cyr2: "С с",   nov2: "s" },
+  { cyr: "Э э / ЭЭ ээ",  nov: "e / e:",   cyr2: "Т т",   nov2: "t" },
+  { cyr: "И и / ИИ ии",  nov: "i / i:",   cyr2: "У у / УУ уу", nov2: "u / u:" },
+  { cyr: "ИЭ иэ",        nov: "\u{AB61}", cyr2: "Ү ү / ҮҮ үү", nov2: "y / y:" },
+  { cyr: "Й й",          nov: "j",        cyr2: "ҮӨ үө", nov2: "w" },
+  { cyr: "К к",          nov: "k",        cyr2: "Х х",   nov2: "q" },
+  { cyr: "Л л",          nov: "l",        cyr2: "Ч ч",   nov2: "c" },
+  { cyr: "Ль ль",        nov: "\u028E",   cyr2: "Ы ы / ЫЫ ыы", nov2: "\u026F / \u026F:" },
+  { cyr: "М м",          nov: "m",        cyr2: "ЫА ыа", nov2: "\u{AB60}" },
+  { cyr: "Н н",          nov: "n",        cyr2: "УО уо", nov2: "\u{AB63}" },
+  { cyr: "Һ һ",          nov: "h",        cyr2: "ННЬ ннь", nov2: "\u{AB64}\u{AB64}" },
+];
+
+function App() {
+  const [input, setInput] = useState(
+    "\u041E\u043E\u043D\u043D\u044C\u043E\u0431\u043E\u0445\u0442\u043E\u043E\u043D \u0445\u0430\u0430\u043B\u044B\u0430\u0493\u044B\u04A5.\n\u042D\u0434\u044D\u0440-\u0441\u044D\u043D\u044D\u0445 \u044D\u0440\u0434\u044D\u0445\u0445\u044D\n\u042D\u0442\u044D\u043D-\u0442\u044B\u044B\u043D\u0430\u043D \u0431\u0438\u044D\u0440\u0438\u044D\u0493\u0438\u04A5."
+  );
+  const [copied, setCopied] = useState(false);
+  const [showTable, setShowTable] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
+  const [stripPunct, setStripPunct] = useState(false);
+
+  const cleanInput = stripPunct
+    ? input.replace(/[.,!?;:\u00AB\u00BB\u201C\u201D\u201E\u2018\u2019\u0027()\-\u2013\u2014]/g, "")
+    : input;
+
+  const rawOutput = transliterate(cleanInput);
+  const output = useFallback ? applyFallback(rawOutput) : rawOutput;
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(output).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [output]);
+
+  const Toggle = ({ label, active, onToggle, title }) =>
+    h("div", { style: { display: "flex", alignItems: "center", gap: 10 } },
+      h("span", { style: { fontSize: 11, color: "#5a4a2a", letterSpacing: "0.08em" } }, label),
+      h("button", {
+        onClick: onToggle, title,
+        style: {
+          width: 44, height: 24, borderRadius: 12, border: "none",
+          background: active ? "#c8963e" : "#2e2218",
+          cursor: "pointer", position: "relative", transition: "background 0.25s", flexShrink: 0,
+        },
+      },
+        h("div", {
+          style: {
+            position: "absolute", top: 3, left: active ? 22 : 3,
+            width: 18, height: 18, borderRadius: "50%",
+            background: "#fff", transition: "left 0.25s",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
+          },
+        })
+      )
+    );
+
+  return h("div", {
+    style: {
+      minHeight: "100vh", background: "#0f0d0b", color: "#e8dcc8",
+      fontFamily: "'Noto Sans', sans-serif",
+    },
+  },
+    // Header
+    h("div", {
+      style: {
+        background: "#1a1410", borderBottom: "1px solid #3a2e1e",
+        padding: "22px 32px", position: "relative",
+      },
+    },
+      h("div", {
+        style: {
+          position: "absolute", top: 0, left: 0, right: 0, height: "3px",
+          background: "linear-gradient(90deg, transparent, #c8963e, #e8b85a, #c8963e, transparent)",
+        },
+      }),
+      h("div", {
+        style: { maxWidth: 820, margin: "0 auto", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" },
+      },
+        h("div", null,
+          h("h1", {
+            style: {
+              margin: 0, fontSize: "clamp(18px, 3vw, 26px)", fontWeight: 700,
+              letterSpacing: "0.01em",
+              background: "linear-gradient(135deg, #e8c47a, #c8963e)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            },
+          }, "\u0410\u043B\u0444\u0430\u0432\u0438\u0442 \u0421.\u0410. \u041D\u043E\u0432\u0433\u043E\u0440\u043E\u0434\u043E\u0432\u0430"),
+          h("p", {
+            style: { margin: "4px 0 0", fontSize: 12, color: "#6a5a3a", letterSpacing: "0.04em" },
+          },
+            "\u0422\u0440\u0430\u043D\u0441\u043B\u0438\u0442\u0435\u0440\u0430\u0442\u043E\u0440 \u00B7 1917\u20131929 \u00B7 \u0414\u043E\u043B\u0433\u0438\u0435 \u0433\u043B\u0430\u0441\u043D\u044B\u0435: ",
+            h("span", { style: { color: "#c8963e", fontWeight: 600 } }, "\u044B\u044B\u0442 \u2192 \u026F:t")
+          )
+        ),
+        h("div", {
+          style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" },
+        },
+          h(Toggle, { label: "\u0431\u0435\u0437 \u043F\u0443\u043D\u043A\u0442\u0443\u0430\u0446\u0438\u0438", active: stripPunct, onToggle: () => setStripPunct(v => !v) }),
+          h(Toggle, {
+            label: "iOS-\u0444\u043E\u043B\u0431\u0435\u043A", active: useFallback,
+            onToggle: () => setUseFallback(v => !v),
+            title: "\u{AB60}\u2192\u0459  \u{AB61}\u2192\u0465  \u{AB62}\u2192\u0153  \u{AB63}\u2192uo",
+          })
+        )
+      )
+    ),
+
+    // Main content
+    h("div", { style: { maxWidth: 820, margin: "0 auto", padding: "28px 32px" } },
+
+      // Input box
+      h("div", {
+        style: {
+          border: "1px solid #2e2218", borderRadius: 6, overflow: "hidden",
+          marginBottom: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+        },
+      },
+        h("div", {
+          style: {
+            padding: "9px 18px", background: "#1a1410",
+            borderBottom: "1px solid #2e2218",
+            display: "flex", alignItems: "center", gap: 10,
+          },
+        },
+          h("span", {
+            style: {
+              fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+              color: "#5a4a2a", fontWeight: 600,
+            },
+          }, "\u0412\u0432\u043E\u0434 \u00B7 \u043A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0430"),
+          h("button", {
+            onClick: () => setInput(""),
+            style: {
+              marginLeft: "auto", background: "none", border: "1px solid #3a2e1e",
+              borderRadius: 3, color: "#5a4a2a", fontSize: 10,
+              padding: "2px 9px", cursor: "pointer", letterSpacing: "0.08em",
+              transition: "all 0.2s",
+            },
+            onMouseOver: e => { e.currentTarget.style.borderColor = "#c8963e"; e.currentTarget.style.color = "#c8963e"; },
+            onMouseOut: e => { e.currentTarget.style.borderColor = "#3a2e1e"; e.currentTarget.style.color = "#5a4a2a"; },
+          }, "\u041E\u0427\u0418\u0421\u0422\u0418\u0422\u042C")
+        ),
+        h("textarea", {
+          value: input,
+          onChange: e => setInput(e.target.value),
+          placeholder: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u044F\u043A\u0443\u0442\u0441\u043A\u0438\u0439 \u0442\u0435\u043A\u0441\u0442 \u043D\u0430 \u043A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0435...",
+          style: {
+            width: "100%", minHeight: 160, padding: "18px 20px",
+            background: "#110e0b", border: "none", outline: "none",
+            resize: "vertical", color: "#e8dcc8", fontSize: 17,
+            lineHeight: 1.85, fontFamily: "'Noto Sans', sans-serif",
+            boxSizing: "border-box",
+          },
+        }),
+        h("div", {
+          style: { padding: "6px 18px", background: "#161210", borderTop: "1px solid #1e1a12" },
+        },
+          h("span", { style: { fontSize: 10, color: "#3a2e1e", letterSpacing: "0.06em" } }, input.length + " \u0441\u0438\u043C\u0432.")
+        )
+      ),
+
+      // Arrow
+      h("div", { style: { textAlign: "center", marginBottom: 12, color: "#3a2e1e", fontSize: 20, lineHeight: 1 } }, "\u2193"),
+
+      // Output box
+      h("div", {
+        style: {
+          border: "1px solid #2e2218", borderRadius: 6, overflow: "hidden",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.4)", marginBottom: 24,
+        },
+      },
+        h("div", {
+          style: {
+            padding: "9px 18px", background: "#1a1410",
+            borderBottom: "1px solid #2e2218",
+            display: "flex", alignItems: "center", gap: 8,
+          },
+        },
+          h("div", {
+            style: {
+              width: 6, height: 6, borderRadius: "50%",
+              background: "#c8963e", boxShadow: "0 0 6px #c8963e", flexShrink: 0,
+            },
+          }),
+          h("span", {
+            style: { fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8a6a3a", fontWeight: 600 },
+          },
+            "\u041D\u043E\u0432\u0433\u043E\u0440\u043E\u0434\u043E\u0432",
+            useFallback && h("span", { style: { color: "#c8963e", marginLeft: 8, fontWeight: 400 } }, "\u00B7 iOS")
+          ),
+          h("button", {
+            onClick: handleCopy,
+            style: {
+              marginLeft: "auto",
+              background: copied ? "#2a3a1a" : "none",
+              border: "1px solid " + (copied ? "#4a7a2a" : "#3a2e1e"),
+              borderRadius: 3, color: copied ? "#7ac84a" : "#5a4a2a",
+              fontSize: 10, padding: "2px 10px", cursor: "pointer",
+              letterSpacing: "0.08em", transition: "all 0.2s",
+            },
+            onMouseOver: e => { if (!copied) { e.currentTarget.style.borderColor = "#c8963e"; e.currentTarget.style.color = "#c8963e"; } },
+            onMouseOut: e => { if (!copied) { e.currentTarget.style.borderColor = "#3a2e1e"; e.currentTarget.style.color = "#5a4a2a"; } },
+          }, copied ? "\u2713 \u0421\u041A\u041E\u041F\u0418\u0420\u041E\u0412\u0410\u041D\u041E" : "\u041A\u041E\u041F\u0418\u0420\u041E\u0412\u0410\u0422\u042C")
+        ),
+        h("div", {
+          style: {
+            minHeight: 160, padding: "18px 20px", background: "#0d0b09",
+            color: "#d4b87a", fontSize: 17, lineHeight: 1.85,
+            fontFamily: "'Noto Sans', sans-serif",
+            whiteSpace: "pre-wrap", wordBreak: "break-word",
+          },
+        },
+          output || h("span", { style: { color: "#2e2218", fontStyle: "italic", fontSize: 14 } }, "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043F\u043E\u044F\u0432\u0438\u0442\u0441\u044F \u0437\u0434\u0435\u0441\u044C...")
+        ),
+        h("div", {
+          style: { padding: "6px 18px", background: "#161210", borderTop: "1px solid #1e1a12" },
+        },
+          h("span", { style: { fontSize: 10, color: "#3a2e1e", letterSpacing: "0.06em" } }, output.length + " \u0441\u0438\u043C\u0432.")
+        )
+      ),
+
+      // Toggle reference table button
+      h("button", {
+        onClick: () => setShowTable(v => !v),
+        style: {
+          background: "none", border: "1px solid #2e2218", borderRadius: 3,
+          color: "#6a5a3a", fontSize: 11, padding: "7px 18px",
+          cursor: "pointer", letterSpacing: "0.1em", transition: "all 0.2s",
+          marginBottom: showTable ? 16 : 0, display: "block", width: "100%",
+        },
+        onMouseOver: e => { e.currentTarget.style.borderColor = "#c8963e"; e.currentTarget.style.color = "#c8963e"; },
+        onMouseOut: e => { e.currentTarget.style.borderColor = "#2e2218"; e.currentTarget.style.color = "#6a5a3a"; },
+      }, showTable ? "\u25B2 \u0421\u041A\u0420\u042B\u0422\u042C \u0422\u0410\u0411\u041B\u0418\u0426\u0423 \u0421\u041E\u041E\u0422\u0412\u0415\u0422\u0421\u0422\u0412\u0418\u0419" : "\u25BC \u0422\u0410\u0411\u041B\u0418\u0426\u0410 \u0421\u041E\u041E\u0422\u0412\u0415\u0422\u0421\u0422\u0412\u0418\u0419"),
+
+      // Reference table
+      showTable && h("div", {
+        style: { border: "1px solid #2e2218", borderRadius: 6, overflow: "hidden", background: "#110e0b" },
+      },
+        h("table", { style: { width: "100%", borderCollapse: "collapse" } },
+          h("thead", null,
+            h("tr", { style: { borderBottom: "1px solid #2e2218", background: "#1a1410" } },
+              ["\u041A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0430", "\u041D\u043E\u0432\u0433\u043E\u0440\u043E\u0434\u043E\u0432", "\u041A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0430", "\u041D\u043E\u0432\u0433\u043E\u0440\u043E\u0434\u043E\u0432"].map((hdr, i) =>
+                h("th", {
+                  key: i,
+                  style: {
+                    padding: "8px 18px", fontSize: 10, letterSpacing: "0.12em",
+                    textTransform: "uppercase", color: "#5a4a2a", textAlign: "left",
+                    fontWeight: 600, borderRight: i === 1 ? "1px solid #2e2218" : "none",
+                  },
+                }, hdr)
+              )
+            )
+          ),
+          h("tbody", null,
+            TABLE_DATA.map((row, i) =>
+              h("tr", {
+                key: i,
+                style: { borderBottom: "1px solid #1a1610", background: i % 2 === 0 ? "transparent" : "#0d0b09" },
+              },
+                h("td", { style: { padding: "6px 18px", fontSize: 14, color: "#c8b890" } }, row.cyr),
+                h("td", { style: { padding: "6px 18px", fontSize: 15, color: "#c8963e", fontWeight: 600, borderRight: "1px solid #2e2218" } }, useFallback ? applyFallback(row.nov) : row.nov),
+                h("td", { style: { padding: "6px 18px", fontSize: 14, color: "#c8b890" } }, row.cyr2),
+                h("td", { style: { padding: "6px 18px", fontSize: 15, color: "#c8963e", fontWeight: 600 } }, useFallback ? applyFallback(row.nov2) : row.nov2)
+              )
+            )
+          )
+        ),
+        h("div", {
+          style: {
+            padding: "10px 18px", background: "#1a1410", borderTop: "1px solid #2e2218",
+            fontSize: 11, color: "#4a3a2a", lineHeight: 1.6,
+          },
+        },
+          "\u0414\u0438\u0444\u0442\u043E\u043D\u0433\u0438: \u044B\u0430\u2192\u{AB60} \u0438\u044D\u2192\u{AB61} \u04AF\u04E9\u2192w \u0443\u043E\u2192\u{AB63} \u00B7 \u0414\u043E\u043B\u0433\u0438\u0435: \u0430\u0430\u2192a: \u043E\u043E\u2192\u0254: \u044B\u044B\u2192\u026F: \u00B7 \u043D\u043D\u044C\u2192\u{AB64}\u{AB64} \u00B7 \u0437\u0430\u0433\u043B\u0430\u0432\u043D\u044B\u0445 \u043D\u0435\u0442",
+          useFallback && h("span", { style: { color: "#6a5a3a" } }, " \u00B7 iOS: \u{AB60}\u2192\u0459 \u{AB61}\u2192\u0465 \u{AB62}\u2192\u0153 \u{AB63}\u2192uo")
+        )
+      )
+    )
+  );
+}
+
+createRoot(document.getElementById("root")).render(h(App));
+  </script>
+</body>
+</html>
