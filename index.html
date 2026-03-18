@@ -27,11 +27,11 @@ import { useState, useCallback, createElement as h } from "react";
 import { createRoot } from "react-dom/client";
 
 const RULES = [
-  ["ннь", "\u{AB64}\u{AB64}"],
+  ["ннь", "\u0272\u0272"],
   ["ддь", "зз"],
   ["дь", "з"],
   ["ль", "\u028E"],
-  ["нь", "\u{AB64}"],
+  ["нь", "\u0272"],
   ["ыа", "\u{AB60}"],
   ["иэ", "\u{AB61}"],
   ["үө", "w"],
@@ -44,7 +44,7 @@ const RULES = [
   ["й", "j"], ["к", "k"], ["л", "l"], ["м", "m"],
   ["н", "n"], ["ҥ", "\u014B"], ["п", "p"], ["р", "r"],
   ["с", "s"], ["т", "t"], ["х", "q"], ["ч", "c"],
-  ["һ", "h"], ["ф", "f"], ["в", "v"],
+  ["һ", "h"], ["ф", "f"],
   ["я", "ja"], ["ю", "ju"], ["ё", "j\u0254"],
   ["ж", "\u0292"], ["ш", "\u0283\u0283"], ["з", "z"], ["ц", "ts"],
   ["ь", ""], ["ъ", ""],
@@ -83,23 +83,23 @@ function applyFallback(text) {
 }
 
 const TABLE_DATA = [
-  { cyr: "А а / АА аа",  nov: "a / a:",  cyr2: "Нь нь", nov2: "\u{AB64}" },
+  { cyr: "А а / АА аа",  nov: "a / a:",  cyr2: "Нь нь", nov2: "\u0272" },
   { cyr: "Б б",          nov: "b",        cyr2: "Ҥ ҥ",   nov2: "\u014B" },
-  { cyr: "В в",          nov: "v",        cyr2: "О о / ОО оо", nov2: "\u0254 / \u0254:" },
-  { cyr: "Г г",          nov: "g",        cyr2: "Ө ө / ӨӨ өө", nov2: "\u{AB62} / \u{AB62}:" },
-  { cyr: "Ҕ ҕ",          nov: "\u0283",   cyr2: "П п",   nov2: "p" },
-  { cyr: "Д д",          nov: "d",        cyr2: "Р р",   nov2: "r" },
-  { cyr: "Дь дь",        nov: "з", cyr2: "С с",   nov2: "s" },
-  { cyr: "Э э / ЭЭ ээ",  nov: "e / e:",   cyr2: "Т т",   nov2: "t" },
-  { cyr: "И и / ИИ ии",  nov: "i / i:",   cyr2: "У у / УУ уу", nov2: "u / u:" },
-  { cyr: "ИЭ иэ",        nov: "\u{AB61}", cyr2: "Ү ү / ҮҮ үү", nov2: "y / y:" },
-  { cyr: "Й й",          nov: "j",        cyr2: "ҮӨ үө", nov2: "w" },
-  { cyr: "К к",          nov: "k",        cyr2: "Х х",   nov2: "q" },
-  { cyr: "Л л",          nov: "l",        cyr2: "Ч ч",   nov2: "c" },
-  { cyr: "Ль ль",        nov: "\u028E",   cyr2: "Ы ы / ЫЫ ыы", nov2: "\u026F / \u026F:" },
-  { cyr: "М м",          nov: "m",        cyr2: "ЫА ыа", nov2: "\u{AB60}" },
-  { cyr: "Н н",          nov: "n",        cyr2: "УО уо", nov2: "\u{AB63}" },
-  { cyr: "Һ һ",          nov: "h",        cyr2: "ННЬ ннь", nov2: "\u{AB64}\u{AB64}" },
+  { cyr: "Г г",          nov: "g",        cyr2: "О о / ОО оо", nov2: "\u0254 / \u0254:" },
+  { cyr: "Ҕ ҕ",          nov: "\u0283",   cyr2: "Ө ө / ӨӨ өө", nov2: "\u{AB62} / \u{AB62}:" },
+  { cyr: "Д д",          nov: "d",        cyr2: "П п",   nov2: "p" },
+  { cyr: "Дь дь",        nov: "з",        cyr2: "Р р",   nov2: "r" },
+  { cyr: "Э э / ЭЭ ээ",  nov: "e / e:",   cyr2: "С с",   nov2: "s" },
+  { cyr: "И и / ИИ ии",  nov: "i / i:",   cyr2: "Т т",   nov2: "t" },
+  { cyr: "ИЭ иэ",        nov: "\u{AB61}", cyr2: "У у / УУ уу", nov2: "u / u:" },
+  { cyr: "Й й",          nov: "j",        cyr2: "Ү ү / ҮҮ үү", nov2: "y / y:" },
+  { cyr: "К к",          nov: "k",        cyr2: "ҮӨ үө", nov2: "w" },
+  { cyr: "Л л",          nov: "l",        cyr2: "Х х",   nov2: "q" },
+  { cyr: "Ль ль",        nov: "\u028E",   cyr2: "Ч ч",   nov2: "c" },
+  { cyr: "М м",          nov: "m",        cyr2: "Ы ы / ЫЫ ыы", nov2: "\u026F / \u026F:" },
+  { cyr: "Н н",          nov: "n",        cyr2: "ЫА ыа", nov2: "\u{AB60}" },
+  { cyr: "Һ һ",          nov: "h",        cyr2: "УО уо", nov2: "\u{AB63}" },
+  { cyr: "ННЬ ннь",      nov: "\u0272\u0272", cyr2: "",  nov2: "" },
 ];
 
 function App() {
@@ -364,7 +364,7 @@ function App() {
             fontSize: 11, color: "#4a3a2a", lineHeight: 1.6,
           },
         },
-          "\u0414\u0438\u0444\u0442\u043E\u043D\u0433\u0438: \u044B\u0430\u2192\u{AB60} \u0438\u044D\u2192\u{AB61} \u04AF\u04E9\u2192w \u0443\u043E\u2192\u{AB63} \u00B7 \u0414\u043E\u043B\u0433\u0438\u0435: \u0430\u0430\u2192a: \u043E\u043E\u2192\u0254: \u044B\u044B\u2192\u026F: \u00B7 \u043D\u043D\u044C\u2192\u{AB64}\u{AB64} \u00B7 \u0437\u0430\u0433\u043B\u0430\u0432\u043D\u044B\u0445 \u043D\u0435\u0442",
+          "\u0414\u0438\u0444\u0442\u043E\u043D\u0433\u0438: \u044B\u0430\u2192\u{AB60} \u0438\u044D\u2192\u{AB61} \u04AF\u04E9\u2192w \u0443\u043E\u2192\u{AB63} \u00B7 \u0414\u043E\u043B\u0433\u0438\u0435: \u0430\u0430\u2192a: \u043E\u043E\u2192\u0254: \u044B\u044B\u2192\u026F: \u00B7 \u043D\u043D\u044C\u2192\u0272\u0272 \u00B7 \u0437\u0430\u0433\u043B\u0430\u0432\u043D\u044B\u0445 \u043D\u0435\u0442",
           useFallback && h("span", { style: { color: "#6a5a3a" } }, " \u00B7 iOS: \u{AB60}\u2192\u0459 \u{AB61}\u2192\u0465 \u{AB62}\u2192\u0153 \u{AB63}\u2192uo")
         )
       )
